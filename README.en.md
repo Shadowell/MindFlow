@@ -39,6 +39,7 @@ The core ideas carried into this template are:
 - `docs/progress.md`: current state and next step
 - `docs/contracts/`: sprint-by-sprint contracts
 - `docs/qa/`: QA reports and acceptance notes
+- `docs/standards/`: development standards for Python, Java, database, and frontend work
 - `docs/references/`: design references and source notes
 - `scripts/check.sh`: a shared verification entrypoint
 - `.agents/skills/`: optional local skills for high-frequency workflows
@@ -53,6 +54,7 @@ The core ideas carried into this template are:
    - read `AGENTS.md`
    - read `docs/spec.md`
    - read `docs/progress.md`
+   - read the relevant file under `docs/standards/` for the technology being changed
    - implement only the active sprint contract
    - run `./scripts/check.sh`
    - update `docs/progress.md`

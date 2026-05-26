@@ -13,6 +13,13 @@ Before substantial work, read:
 3. `docs/progress.md`
 4. the active contract under `docs/contracts/`
 
+When work touches a specific technology area, also read the relevant standard before planning or editing:
+
+- Python: `docs/standards/python.md`
+- Java: `docs/standards/java.md`
+- Database schema, migrations, queries, or persistence: `docs/standards/database.md`
+- Frontend UI, web apps, or browser behavior: `docs/standards/frontend.md`
+
 ## Operating Rules
 
 1. Work only within the current sprint contract unless explicitly told to expand scope.
@@ -20,6 +27,8 @@ Before substantial work, read:
 3. Update `docs/progress.md` after each meaningful implementation step.
 4. Do not call work done without running the relevant checks, or clearly documenting what was not checked.
 5. If requirements, architecture, or API contracts change, update `docs/spec.md` and the active contract in the same change.
+6. Do not add fallback behavior, compatibility layers, mocks, or silent error handling unless the user explicitly requests it.
+7. Match database design complexity to the project's actual scale. Avoid sharding, CQRS, denormalized read models, or other large-system patterns without evidence and explicit approval.
 
 ## Standard Loop
 

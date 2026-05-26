@@ -10,4 +10,5 @@ A minimal repository template for building a development harness for Codex-drive
 
 - [中文说明](README.zh-CN.md)
 - [English Guide](README.en.md)
+- [Development Standards](docs/standards/)
 - [Reference: Harness design: Building long-running applications with LLMs](docs/references/harness-design-long-running-apps.md)

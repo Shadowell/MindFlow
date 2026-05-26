@@ -39,6 +39,7 @@
 - `docs/progress.md`：当前状态与下一步
 - `docs/contracts/`：按 sprint 组织的合同
 - `docs/qa/`：QA 报告与验收记录
+- `docs/standards/`：Python、Java、数据库和前端开发规范
 - `docs/references/`：设计来源和参考记录
 - `scripts/check.sh`：统一验证入口
 - `.agents/skills/`：可选的本地高频 workflow skills
@@ -53,6 +54,7 @@
    - 读取 `AGENTS.md`
    - 读取 `docs/spec.md`
    - 读取 `docs/progress.md`
+   - 根据涉及的技术栈读取 `docs/standards/` 中的对应规范
    - 只实现当前 active sprint contract
    - 运行 `./scripts/check.sh`
    - 更新 `docs/progress.md`

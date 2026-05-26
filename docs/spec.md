@@ -20,6 +20,7 @@
 1. Keep the harness small, readable, and easy to adopt.
 2. Make long-running coding tasks resumable through files.
 3. Support progressive growth toward stronger QA, skills, and automation.
+4. Provide concise, source-backed engineering standards for common implementation stacks without forcing a single stack.
 
 ## Technical Shape
 
@@ -27,11 +28,14 @@
 - Backend: not required by the template
 - Storage: markdown files and repository history
 - Integrations: Codex, optional local skills, optional automation, optional project-specific tooling
+- Standards: markdown guidance under `docs/standards/` for Python, Java, database design, and frontend work
 
 ## Constraints
 
 - The template should stay useful without requiring heavy infrastructure.
 - New structure should be added only after a workflow proves repetitive or fragile.
+- Technology standards should stay lightweight and should not introduce toolchain requirements before a real project selects that stack.
+- Database design guidance should scale by project size and avoid premature architecture patterns.
 
 ## Non-Goals
 
