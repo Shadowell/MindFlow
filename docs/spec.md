@@ -21,6 +21,7 @@
 2. Make long-running coding tasks resumable through files.
 3. Support progressive growth toward stronger QA, skills, and automation.
 4. Provide concise, source-backed engineering standards for common implementation stacks without forcing a single stack.
+5. Reduce token waste on commodity modules by preferring mature lightweight integrations for personal and small projects.
 
 ## Technical Shape
 
@@ -28,7 +29,7 @@
 - Backend: not required by the template
 - Storage: markdown files and repository history
 - Integrations: Codex, optional local skills, optional automation, optional project-specific tooling
-- Standards: markdown guidance under `docs/standards/` for Python, Java, database design, and frontend work
+- Standards: markdown guidance under `docs/standards/` for Python, Java, database design, frontend work, and reusable commodity modules
 
 ## Constraints
 
@@ -36,6 +37,7 @@
 - New structure should be added only after a workflow proves repetitive or fragile.
 - Technology standards should stay lightweight and should not introduce toolchain requirements before a real project selects that stack.
 - Database design guidance should scale by project size and avoid premature architecture patterns.
+- Reusable module guidance should favor email-first authentication and simple hosted payment flows for personal or small products.
 
 ## Non-Goals
 
