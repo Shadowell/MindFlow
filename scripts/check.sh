@@ -24,11 +24,24 @@ run_if_present "frontend test" "$ROOT_DIR/frontend/package.json" npm test
 run_if_present "frontend build" "$ROOT_DIR/frontend/package.json" npm run build
 run_if_present "frontend lint" "$ROOT_DIR/frontend/package.json" npm run lint
 
-if [ -f "$ROOT_DIR/pyproject.toml" ]; then
-  echo "[check] python project detected via pyproject.toml"
-elif [ -d "$ROOT_DIR/backend" ]; then
-  echo "[check] compiling backend python sources"
-  python3 -m compileall "$ROOT_DIR/backend"
+if [ -f "$ROOT_DIR/backend/pyproject.toml" ]; then
+  echo "[check] backend compile"
+  (
+    cd "$ROOT_DIR/backend"
+    python3 -m compileall app migrations
+  )
+
+  echo "[check] backend tests"
+  (
+    cd "$ROOT_DIR/backend"
+    PYTHONPATH=. python3 -m pytest -q
+  )
+
+  echo "[check] backend alembic offline migration"
+  (
+    cd "$ROOT_DIR/backend"
+    python3 -m alembic -c alembic.ini upgrade head --sql >/tmp/mindflow-alembic-offline.sql
+  )
 fi
 
 if [ -f "$ROOT_DIR/voice_gen.py" ]; then
