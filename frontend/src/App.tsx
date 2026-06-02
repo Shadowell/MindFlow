@@ -17,8 +17,10 @@ import {
 } from 'lucide-react'
 import {
   MindFlowApi,
+  type DraftResponse,
   type PersonaResponse,
   type PlatformId,
+  type PlatformPreviewResponse,
   type ScheduleCreateResponse,
   type TopicResponse,
 } from './api'
@@ -116,47 +118,45 @@ function personaFromResponse(persona: PersonaResponse): Persona {
   }
 }
 
-function createDraft(topic: string, persona: Persona) {
-  const subject = topic.trim() || '低成本通勤穿搭'
-
+function draftTextFromResponse(draft: DraftResponse) {
   return [
-    `标题：3 套${subject}，一周重复穿也不尴尬`,
-    '',
-    `人设：${persona.name}`,
-    `语气：${persona.tone}`,
+    `标题：${draft.title}`,
     '',
     '正文：',
-    `这组内容先解决一个真实问题：早上没有时间搭配，但又不想每天穿得像同一套。把${subject}拆成 3 个公式，每个公式都保留一件稳定单品，再用颜色或配饰做变化。`,
+    draft.body,
     '',
-    '1. 衬衫加直筒裤：适合会议日，重点是线条干净。',
-    '2. 针织衫加半裙：适合普通工作日，重点是舒适和显精神。',
-    '3. 外套加基础 T：适合通勤和下班约会，重点是方便切换场景。',
-    '',
-    '结尾互动：你最想先改造哪一套？评论区给我你的预算和场景。',
-    '',
-    '#通勤穿搭 #低成本变美 #一周穿搭',
+    draft.tags.map((tag) => `#${tag}`).join(' '),
   ].join('\n')
 }
 
-function createDraftTitle(topic: string) {
-  const subject = topic.trim() || '低成本通勤穿搭'
-  return `3 套${subject}，一周重复穿也不尴尬`
-}
+function previewFromResponse(preview: PlatformPreviewResponse): PlatformPreview {
+  const basePreview = platformPreviews[preview.platform]
 
-function draftTags(topic: string) {
-  const subject = topic.trim() || '通勤穿搭'
-  return [subject, '内容运营', '自动排期']
+  return {
+    label: basePreview.label,
+    title: preview.title ?? basePreview.title,
+    metric:
+      preview.validation_status === 'valid'
+        ? '后端校验通过'
+        : `校验状态 ${preview.validation_status}`,
+    copy: preview.body,
+    hints: preview.tags.length > 0 ? preview.tags : basePreview.hints,
+  }
 }
 
 function App() {
   const [hotTopics, setHotTopics] = useState<HotTopic[]>([])
   const [personas, setPersonas] = useState<Persona[]>([])
   const [topic, setTopic] = useState('')
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null)
   const [selectedPersonaId, setSelectedPersonaId] = useState('')
   const [draft, setDraft] = useState('')
   const [draftStatus, setDraftStatus] = useState('待生成')
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformId>('weibo')
   const [persistedDraftId, setPersistedDraftId] = useState<string | null>(null)
+  const [generatedPreviews, setGeneratedPreviews] = useState<
+    Partial<Record<PlatformId, PlatformPreview>>
+  >({})
   const [scheduleResult, setScheduleResult] = useState<ScheduleCreateResponse | null>(null)
   const [apiError, setApiError] = useState<string | null>(null)
   const [inputError, setInputError] = useState<string | null>(null)
@@ -167,7 +167,7 @@ function App() {
   const selectedPersona =
     personas.find((persona) => persona.id === selectedPersonaId) ?? null
 
-  const activePreview = platformPreviews[selectedPlatform]
+  const activePreview = generatedPreviews[selectedPlatform] ?? platformPreviews[selectedPlatform]
   const isScheduled = scheduleResult !== null
   const activeJob = scheduleResult?.publish_jobs.find(
     (job) => job.platform === selectedPlatform,
@@ -206,6 +206,11 @@ function App() {
         setHotTopics(nextTopics)
         setPersonas(nextPersonas)
         setTopic((current) => current.trim() || nextTopics[0]?.title || '')
+        setSelectedTopicId((current) =>
+          nextTopics.some((topic) => topic.id === current)
+            ? current
+            : nextTopics[0]?.id ?? null,
+        )
         setSelectedPersonaId((current) =>
           nextPersonas.some((persona) => persona.id === current)
             ? current
@@ -218,6 +223,7 @@ function App() {
 
         setHotTopics([])
         setPersonas([])
+        setSelectedTopicId(null)
         setSelectedPersonaId('')
         setInputError(error instanceof Error ? error.message : '素材输入加载失败')
       } finally {
@@ -234,55 +240,60 @@ function App() {
     }
   }, [])
 
-  function selectHotTopic(nextTopic: string) {
-    setTopic(nextTopic)
+  function selectHotTopic(nextTopic: HotTopic) {
+    setTopic(nextTopic.title)
+    setSelectedTopicId(nextTopic.id)
     setDraftStatus('待生成')
     setPersistedDraftId(null)
     setScheduleResult(null)
+    setGeneratedPreviews({})
+    setApiError(null)
+  }
+
+  function editTopic(nextTopic: string) {
+    setTopic(nextTopic)
+    setSelectedTopicId(null)
+    setDraftStatus('待生成')
+    setPersistedDraftId(null)
+    setScheduleResult(null)
+    setGeneratedPreviews({})
     setApiError(null)
   }
 
   async function generateDraft() {
+    if (!selectedTopicId) {
+      setApiError('请先选择后端返回的热点。')
+      return
+    }
+
     if (!selectedPersona) {
       setApiError('请先等待后端返回可用人设。')
       return
     }
 
-    const nextDraft = createDraft(topic, selectedPersona)
-    const nextTitle = createDraftTitle(topic)
-    const nextTags = draftTags(topic)
-
-    setDraft(nextDraft)
     setDraftStatus('同步中')
     setScheduleResult(null)
     setApiError(null)
+    setGeneratedPreviews({})
     setIsGenerating(true)
 
     try {
-      const persistedDraft = await MindFlowApi.createDraft({
-        body: nextDraft,
-        generation_source: 'frontend_mock_composer',
-        status: 'generated',
-        tags: nextTags,
-        title: nextTitle,
+      const composition = await MindFlowApi.composeDraft({
+        persona_id: selectedPersona.id,
+        platforms: Object.keys(platformPreviews),
+        topic_id: selectedTopicId,
       })
 
-      await Promise.all(
-        (Object.keys(platformPreviews) as PlatformId[]).map((platformId) =>
-          MindFlowApi.upsertPlatformPreview(persistedDraft.id, platformId, {
-            body: platformPreviews[platformId].copy,
-            tags: platformPreviews[platformId].hints,
-            title: platformPreviews[platformId].title,
-            validation_details: {
-              hints: platformPreviews[platformId].hints,
-              metric: platformPreviews[platformId].metric,
-            },
-            validation_status: 'valid',
-          }),
-        ),
+      setDraft(draftTextFromResponse(composition.draft))
+      setGeneratedPreviews(
+        Object.fromEntries(
+          composition.platform_previews.map((preview) => [
+            preview.platform,
+            previewFromResponse(preview),
+          ]),
+        ) as Partial<Record<PlatformId, PlatformPreview>>,
       )
-
-      setPersistedDraftId(persistedDraft.id)
+      setPersistedDraftId(composition.draft.id)
       setDraftStatus('已同步后端')
     } catch (error) {
       setPersistedDraftId(null)
@@ -357,7 +368,7 @@ function App() {
                   <button
                     className="hot-topic"
                     key={hotTopic.id}
-                    onClick={() => selectHotTopic(hotTopic.title)}
+                    onClick={() => selectHotTopic(hotTopic)}
                     type="button"
                   >
                     <span className="hot-topic-main">
@@ -435,7 +446,7 @@ function App() {
             <input
               id="topic"
               name="topic"
-              onChange={(event) => setTopic(event.target.value)}
+              onChange={(event) => editTopic(event.target.value)}
               type="text"
               value={topic}
             />
@@ -479,7 +490,7 @@ function App() {
           <div className="composer-actions">
             <button
               className="primary-action"
-              disabled={isGenerating || !selectedPersona}
+              disabled={isGenerating || !selectedPersona || !selectedTopicId}
               onClick={generateDraft}
               type="button"
             >

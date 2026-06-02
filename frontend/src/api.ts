@@ -33,6 +33,8 @@ export type PersonaListResponse = {
 
 export type DraftResponse = {
   id: string
+  topic_id: string | null
+  persona_id: string | null
   title: string
   body: string
   tags: string[]
@@ -53,7 +55,16 @@ export type PlatformPreviewResponse = {
   title: string | null
   body: string
   tags: string[]
+  cover_note: string | null
   validation_status: string
+  validation_details: Record<string, unknown> | null
+  created_at: string
+  updated_at: string
+}
+
+export type DraftCompositionResponse = {
+  draft: DraftResponse
+  platform_previews: PlatformPreviewResponse[]
 }
 
 export type PublishJobResponse = {
@@ -105,6 +116,13 @@ export const MindFlowApi = {
 
   listPersonas() {
     return request<PersonaListResponse>('/personas')
+  },
+
+  composeDraft(payload: RequestBody) {
+    return request<DraftCompositionResponse>('/compositions/drafts', {
+      body: JSON.stringify(payload),
+      method: 'POST',
+    })
   },
 
   createDraft(payload: RequestBody) {

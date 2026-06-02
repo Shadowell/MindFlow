@@ -4,11 +4,11 @@
 
 - Branch: `main`
 - Harness status: `active`
-- Last verified state: `Sprint 14 backend draft composition verified with ./scripts/check.sh`
+- Last verified state: `Sprint 15 frontend composition wiring verified with ./scripts/check.sh`
 
 ## Active Contract
 
-- `docs/contracts/sprint-14-backend-draft-composition.md`
+- `docs/contracts/sprint-15-frontend-composition-wiring.md`
 
 ## Latest Completed Work
 
@@ -74,10 +74,17 @@
 - Added backend template output that persists one draft and one platform preview per selected platform.
 - Added backend tests proving successful composition and inactive persona rejection.
 - Added Sprint 14 design note and QA report.
+- Added Sprint 15 contract for frontend composition API wiring.
+- Added typed frontend API client coverage for `POST /api/compositions/drafts`.
+- Updated the workbench to track the selected backend topic id.
+- Replaced frontend local draft composition with `MindFlowApi.composeDraft`.
+- Updated the editor to render backend-composed draft text and the preview panel to use returned platform previews.
+- Added frontend tests proving composition endpoint usage, payload shape, schedule continuity, and backend composition error handling.
+- Added Sprint 15 design note and QA report.
 
 ## Verification Evidence
 
-- `./scripts/check.sh` passed for Sprint 14. Summary:
+- `./scripts/check.sh` passed for Sprint 15. Summary:
 
 ```text
 [check] repository root: /Users/jie.feng/wlb/MindFlow
@@ -96,12 +103,13 @@ vite v8.0.16 building client environment for production...
 ```
 
 - `git diff --check` passed.
-- `rg -n "sprint-14|/api/compositions/drafts|DraftComposition|backend_template_composer" backend docs` confirmed the Sprint 14 backend composition terms are present across backend code and docs.
-- Targeted backend test `PYTHONPATH=. python3 -m pytest tests/test_draft_composition_api.py -q` passed with `2 passed`.
+- `rg -n "sprint-15|composeDraft|/api/compositions/drafts|backend_template_composer" frontend docs` confirmed the Sprint 15 frontend composition terms are present across frontend code and docs.
+- Targeted frontend test `npm run test` passed with `5 passed`.
+- Browser smoke with Vite on `127.0.0.1:5173` confirmed the workbench renders responsive panels and shows explicit backend topic/persona loading errors when no backend is running.
 
 ## Known Gaps
 
-- The frontend now calls backend APIs for topics, personas, drafts, platform previews, schedules, and publish jobs, but its generation button has not yet been wired to the backend composition endpoint.
+- The frontend now calls backend APIs for topics, personas, backend draft composition, schedules, and publish jobs.
 - The backend composition endpoint is deterministic template output, not AI generation.
 - A fresh backend database can return empty topic/persona lists until records are created through API calls or a future admin/import flow.
 - The deployed PostgreSQL server is not connected yet; migrations were verified through Alembic offline SQL generation.
@@ -111,7 +119,6 @@ vite v8.0.16 building client environment for production...
 
 ## Recommended Next Steps
 
-1. Wire the frontend `生成图文` action to `POST /api/compositions/drafts`.
-2. Configure a safe deployed PostgreSQL environment outside the repository and apply migrations after credentials and backup expectations are confirmed.
-3. Add backend APIs for assets and AI generation so draft composition can become provider-backed.
-4. Add the Weibo AutoRepost adapter only after persisted publish jobs exist in the deployed environment.
+1. Configure a safe deployed PostgreSQL environment outside the repository and apply migrations after credentials and backup expectations are confirmed.
+2. Add backend APIs for assets and provider-backed AI generation so draft composition can become model-backed.
+3. Add the Weibo AutoRepost adapter only after persisted publish jobs exist in the deployed environment.
