@@ -2,53 +2,71 @@
 
 ## Product Summary
 
-`codex-project-template` is a reusable starting point for building a development harness around Codex. Its job is to help a repository store context, define sprint-sized work, verify outcomes, and preserve handoff information so coding can continue across sessions or machines.
+MindFlow is an AI-assisted content creation workbench for planning, drafting, previewing, and scheduling image-text posts across Douyin, Weibo, and Xiaohongshu. The current implementation is a static frontend prototype that demonstrates the target workflow with mock data before backend persistence, AI generation, and platform publishing are connected.
+
+The repository still keeps the Codex project-template harness: sprint contracts, progress notes, QA reports, and engineering standards remain the source of truth for incremental delivery.
 
 ## Users
 
-- Individual developers using Codex in day-to-day project work
-- Teams that want a shared harness structure before building plugins or background automation
+- Individual creators who publish recurring social content.
+- Small content operations teams that need a lightweight drafting and scheduling surface.
+- Developers using Codex to build the MindFlow product incrementally.
 
 ## Core User Journeys
 
-1. Start a new project with a stable Codex operating structure.
-2. Turn a vague feature request into a sprint contract and implement it incrementally.
-3. Review a completed sprint with QA notes and preserve the next step for a later session.
+1. Review trending topics and choose one as the current creation theme.
+2. Select an account persona and generate a draft image-text post.
+3. Edit the generated title, body, tags, and image structure.
+4. Preview how the draft reads on Douyin, Weibo, and Xiaohongshu.
+5. Add the draft to a publishing schedule and prepare it for a future publishing queue.
+6. Continue implementation through sprint contracts, verification, and progress notes.
 
 ## Product Priorities
 
-1. Keep the harness small, readable, and easy to adopt.
-2. Make long-running coding tasks resumable through files.
-3. Support progressive growth toward stronger QA, skills, and automation.
-4. Provide concise, source-backed engineering standards for common implementation stacks without forcing a single stack.
-5. Reduce token waste on commodity modules by preferring mature lightweight integrations for personal and small projects.
+1. Make the creation workflow visible and usable before backend integration.
+2. Keep the UI operational, dense, and reviewable rather than marketing-oriented.
+3. Support Douyin, Weibo, and Xiaohongshu as first-class target platforms.
+4. Preserve a path to integrate the existing `/Users/jie.feng/wlb/AutoRepost` capability behind a publishing queue.
+5. Use PostgreSQL for future persisted product data because the user's server is already deployed.
+6. Keep commodity modules lightweight and avoid premature architecture patterns.
+7. Preserve the Codex harness so work can continue across sessions without relying on chat history.
 
 ## Technical Shape
 
-- Frontend: not required by the template
-- Backend: not required by the template
-- Storage: markdown files and repository history
-- Integrations: Codex, optional local skills, optional automation, optional project-specific tooling
-- Standards: markdown guidance under `docs/standards/` for Python, Java, database design, frontend work, and reusable commodity modules
+- Frontend: Vite + React + TypeScript under `frontend/`.
+- Current frontend state: static prototype with local React state and mock data.
+- Backend: not implemented yet.
+- Storage: PostgreSQL planned for product data; markdown files and repository history for delivery state.
+- AI generation: not connected yet.
+- Platform integrations: Douyin, Weibo, and Xiaohongshu planned; no live API connection yet.
+- Legacy publishing: `/Users/jie.feng/wlb/AutoRepost` planned as an integration candidate; current UI only includes a Legacy publishing entry point.
+- Standards: markdown guidance under `docs/standards/` for Python, Java, database design, frontend work, and reusable commodity modules.
+- Auth selection: documentation-only decision matrix and stack recipes remain available for future implementation sessions.
 
 ## Constraints
 
-- The template should stay useful without requiring heavy infrastructure.
-- New structure should be added only after a workflow proves repetitive or fragile.
-- Technology standards should stay lightweight and should not introduce toolchain requirements before a real project selects that stack.
-- Database design guidance should scale by project size and avoid premature architecture patterns.
-- Reusable module guidance should favor email-first authentication and simple hosted payment flows for personal or small products.
+- Do not overwrite existing Sprint 04-06 documentation when adding product code.
+- Keep prototype work static until backend contracts are defined.
+- Do not connect production platform credentials without explicit approval and secret-handling design.
+- Match database design complexity to the current product scale; avoid sharding, CQRS, or denormalized read models without evidence.
+- Prefer mature lightweight integrations for commodity modules such as authentication.
 
 ## Non-Goals
 
-- Replacing project-specific engineering judgment
-- Forcing a single stack, framework, or deployment model
+- Building a marketing landing page.
+- Implementing real AI generation in the prototype sprint.
+- Connecting PostgreSQL before schema and API contracts are agreed.
+- Connecting Douyin, Weibo, or Xiaohongshu APIs before platform adapter requirements are defined.
+- Migrating AutoRepost code before its integration boundary is chosen.
+- Replacing project-specific engineering judgment with the harness.
 
 ## Acceptance Direction
 
-The primary acceptance flow is: define a sprint, implement within that sprint, run verification, record QA, and leave clear progress for the next Codex run.
+The immediate acceptance flow is: open the frontend, land directly on the AI creation workbench, click a hot topic, generate a mock draft, switch platform previews, add the draft to schedule, verify desktop and mobile layout, run repository checks, and record progress for the next sprint.
 
 ## Open Questions
 
-- Which additional local skills are worth standardizing after the first few real projects?
-- When should the template evolve into a plugin or automation bundle?
+- What PostgreSQL schema should be used for topics, personas, drafts, schedules, platform accounts, and publish jobs?
+- Should AutoRepost run as a subprocess, an internal module, or an external worker behind the publishing queue?
+- Which AI provider and prompt contract should be used for real draft generation?
+- What account and credential model is required for Douyin, Weibo, and Xiaohongshu publishing?
