@@ -1,5 +1,36 @@
 export type PlatformId = 'douyin' | 'weibo' | 'xiaohongshu'
 
+export type TopicResponse = {
+  id: string
+  title: string
+  source_platform: string | null
+  source_url: string | null
+  heat_score: number | null
+  signal: string | null
+  raw_metadata: Record<string, unknown> | null
+  discovered_at: string
+  created_at: string
+}
+
+export type TopicListResponse = {
+  items: TopicResponse[]
+}
+
+export type PersonaResponse = {
+  id: string
+  name: string
+  audience: string
+  tone: string
+  instructions: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type PersonaListResponse = {
+  items: PersonaResponse[]
+}
+
 export type DraftResponse = {
   id: string
   title: string
@@ -68,6 +99,14 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const MindFlowApi = {
+  listTopics() {
+    return request<TopicListResponse>('/topics')
+  },
+
+  listPersonas() {
+    return request<PersonaListResponse>('/personas')
+  },
+
   createDraft(payload: RequestBody) {
     return request<DraftResponse>('/drafts', {
       body: JSON.stringify(payload),

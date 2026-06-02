@@ -34,7 +34,7 @@ The repository still keeps the Codex project-template harness: sprint contracts,
 ## Technical Shape
 
 - Frontend: Vite + React + TypeScript under `frontend/`.
-- Current frontend state: operational prototype with static topic/persona inputs and backend API calls for draft, preview, schedule, and publish job persistence.
+- Current frontend state: operational prototype with backend-loaded topic/persona inputs, local draft composition, and backend API calls for draft, preview, schedule, and publish job persistence.
 - Backend: Python FastAPI under `backend/`, with SQLAlchemy metadata, Alembic migrations, health endpoint, and product APIs for topics, personas, drafts, platform previews, schedules, and publish jobs.
 - Storage: PostgreSQL planned for product data, with the MVP schema documented in `docs/architecture/postgresql-schema.md` and executable migrations under `backend/migrations/`; markdown files and repository history for delivery state.
 - AI generation: not connected yet.
@@ -63,7 +63,7 @@ The repository still keeps the Codex project-template harness: sprint contracts,
 
 ## Acceptance Direction
 
-The immediate acceptance flow is now: choose a static topic/persona, generate local draft text, persist the draft and platform previews through backend APIs, then create a schedule and publish job through the backend. The backend also exposes persisted topic and persona APIs ready for frontend wiring. The next acceptance direction is to wire those APIs into the frontend, connect the backend to a deployed PostgreSQL environment after environment handling is confirmed, or add missing backend APIs for assets and AI generation.
+The immediate acceptance flow is now: load topics and personas from backend APIs, choose one of each in the workbench, generate local draft text, persist the draft and platform previews through backend APIs, then create a schedule and publish job through the backend. The next acceptance direction is to add a backend draft-composition or AI-generation endpoint, connect the backend to a deployed PostgreSQL environment after environment handling is confirmed, or add missing backend APIs for assets.
 
 ## Open Questions
 

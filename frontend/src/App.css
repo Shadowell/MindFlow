@@ -118,6 +118,23 @@
   gap: 10px;
 }
 
+.panel-state {
+  background: var(--surface-muted);
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  color: var(--muted-strong);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  padding: 12px;
+}
+
+.panel-state.error {
+  background: #fff3ee;
+  border-color: #f0b29c;
+  color: #9d3418;
+}
+
 .hot-topic,
 .persona-option {
   background: var(--surface-muted);

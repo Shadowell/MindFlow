@@ -4,11 +4,11 @@
 
 - Branch: `main`
 - Harness status: `active`
-- Last verified state: `Sprint 12 topic and persona APIs verified with ./scripts/check.sh`
+- Last verified state: `Sprint 13 frontend topic/persona wiring verified with ./scripts/check.sh`
 
 ## Active Contract
 
-- `docs/contracts/sprint-12-topic-persona-apis.md`
+- `docs/contracts/sprint-13-topic-persona-frontend-wiring.md`
 
 ## Latest Completed Work
 
@@ -61,16 +61,23 @@
 - Added topic and persona request/response schemas.
 - Added isolated backend API tests proving topic ordering, metadata persistence, and active-only persona listing.
 - Added Sprint 12 design note and QA report.
+- Added Sprint 13 contract for frontend topic and persona API wiring.
+- Added typed frontend API client methods for `GET /api/topics` and `GET /api/personas`.
+- Updated the workbench to load hotspot and persona input panels from backend APIs on page load.
+- Added explicit loading, empty, and error states for backend topic/persona data.
+- Removed static frontend topic/persona fallback data from runtime.
+- Added frontend tests proving backend topic/persona loading, selection, and draft generation flow.
+- Added Sprint 13 design note and QA report.
 
 ## Verification Evidence
 
-- `./scripts/check.sh` passed for Sprint 12. Summary:
+- `./scripts/check.sh` passed for Sprint 13. Summary:
 
 ```text
 [check] repository root: /Users/jie.feng/wlb/MindFlow
 [check] frontend test
 Test Files  1 passed (1)
-Tests  4 passed (4)
+Tests  5 passed (5)
 [check] frontend build
 vite v8.0.16 building client environment for production...
 ✓ built
@@ -83,13 +90,14 @@ vite v8.0.16 building client environment for production...
 ```
 
 - `git diff --check` passed.
-- `rg -n "sprint-12|/api/topics|/api/personas|TopicResponse|PersonaResponse" backend docs` confirmed the Sprint 12 API terms are present across backend code and docs.
-- Targeted backend test `PYTHONPATH=. python3 -m pytest tests/test_content_inputs_api.py -q` passed with `2 passed`.
+- `rg -n "sprint-13|listTopics|listPersonas|/api/topics|/api/personas" frontend docs` confirmed the Sprint 13 frontend API wiring terms are present across frontend code and docs.
+- Targeted frontend test `npm run test` passed with `5 passed`.
+- Browser smoke with Vite on `127.0.0.1:5173` confirmed the workbench renders responsive panels and shows explicit backend topic/persona loading errors when no backend is running.
 
 ## Known Gaps
 
-- The frontend now calls backend APIs for drafts, platform previews, schedules, and publish jobs, but topics, personas, and draft composition are still static/local.
-- Topic and persona backend APIs exist, but the frontend left column has not been wired to them yet.
+- The frontend now calls backend APIs for topics, personas, drafts, platform previews, schedules, and publish jobs, but draft composition is still local.
+- A fresh backend database can return empty topic/persona lists until records are created through API calls or a future admin/import flow.
 - The deployed PostgreSQL server is not connected yet; migrations were verified through Alembic offline SQL generation.
 - AutoRepost is not migrated into MindFlow; it is intentionally documented as an external Weibo publishing adapter.
 - Java checks are not active because the project does not contain Java application code.
@@ -97,7 +105,7 @@ vite v8.0.16 building client environment for production...
 
 ## Recommended Next Steps
 
-1. Wire the frontend hotspot and persona panels to `/api/topics` and `/api/personas`.
+1. Add a backend draft-composition endpoint so draft generation can move out of frontend template logic.
 2. Configure a safe deployed PostgreSQL environment outside the repository and apply migrations after credentials and backup expectations are confirmed.
-3. Add backend APIs for assets and AI generation so draft composition can move out of static frontend logic.
+3. Add backend APIs for assets and AI generation so draft composition can become provider-backed.
 4. Add the Weibo AutoRepost adapter only after persisted publish jobs exist in the deployed environment.
