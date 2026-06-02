@@ -5,13 +5,13 @@ import App from './App'
 
 const draftResponse = {
   id: '11111111-1111-1111-1111-111111111111',
-  topic_id: null,
-  persona_id: null,
-  title: '3 套低成本通勤穿搭，一周重复穿也不尴尬',
-  body: '把低成本通勤穿搭拆成 3 个公式，每个公式都保留一件稳定单品。',
-  tags: ['通勤穿搭', '低成本变美', '一周穿搭'],
+  topic_id: 'topic-api-1',
+  persona_id: 'persona-api-1',
+  title: '后端组合：夏日通勤包',
+  body: '后端组合正文：把后端热点：夏日通勤包拆成 3 个平台都能复用的发布方案。',
+  tags: ['后端热点：夏日通勤包', '后端效率派', '自动创作台'],
   status: 'generated',
-  generation_source: 'frontend_mock_composer',
+  generation_source: 'backend_template_composer',
   created_at: '2026-06-02T12:00:00Z',
   updated_at: '2026-06-02T12:00:00Z',
 }
@@ -108,6 +108,15 @@ const scheduleResponse = {
   ],
 }
 
+const compositionResponse = {
+  draft: draftResponse,
+  platform_previews: [
+    previewResponse('douyin'),
+    previewResponse('weibo'),
+    previewResponse('xiaohongshu'),
+  ],
+}
+
 function mockJsonResponse(body: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(body), {
     headers: { 'Content-Type': 'application/json' },
@@ -116,7 +125,7 @@ function mockJsonResponse(body: unknown, init: ResponseInit = {}) {
   })
 }
 
-function createFetchMock(options: { draftError?: string } = {}) {
+function createFetchMock(options: { compositionError?: string } = {}) {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = String(input)
     const method = init?.method ?? 'GET'
@@ -129,24 +138,15 @@ function createFetchMock(options: { draftError?: string } = {}) {
       return mockJsonResponse(personaListResponse)
     }
 
-    if (path === '/api/drafts' && method === 'POST') {
-      if (options.draftError) {
-        return mockJsonResponse({ detail: options.draftError }, { status: 503 })
+    if (path === '/api/compositions/drafts' && method === 'POST') {
+      if (options.compositionError) {
+        return mockJsonResponse(
+          { detail: options.compositionError },
+          { status: 503 },
+        )
       }
 
-      return mockJsonResponse(draftResponse, { status: 201 })
-    }
-
-    if (path.includes('/platform-previews/douyin') && method === 'PUT') {
-      return mockJsonResponse(previewResponse('douyin'))
-    }
-
-    if (path.includes('/platform-previews/weibo') && method === 'PUT') {
-      return mockJsonResponse(previewResponse('weibo'))
-    }
-
-    if (path.includes('/platform-previews/xiaohongshu') && method === 'PUT') {
-      return mockJsonResponse(previewResponse('xiaohongshu'))
+      return mockJsonResponse(compositionResponse, { status: 201 })
     }
 
     if (path.endsWith('/schedules') && method === 'POST') {
@@ -200,7 +200,7 @@ describe('MindFlow AI workbench prototype', () => {
     expect(screen.getByLabelText('创作主题')).toHaveValue('后端热点：轻断舍离书桌')
   })
 
-  it('uses a backend hot topic to seed the composer and persist generated platform copy', async () => {
+  it('uses backend composition to generate draft and platform previews', async () => {
     const user = userEvent.setup()
     const fetchMock = vi.mocked(fetch)
 
@@ -214,17 +214,25 @@ describe('MindFlow AI workbench prototype', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
-        '/api/drafts',
+        '/api/compositions/drafts',
         expect.objectContaining({ method: 'POST' }),
       )
     })
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/drafts/11111111-1111-1111-1111-111111111111/platform-previews/weibo',
-      expect.objectContaining({ method: 'PUT' }),
+    const compositionCall = fetchMock.mock.calls.find(
+      ([path]) => path === '/api/compositions/drafts',
+    )
+    expect(JSON.parse(String(compositionCall?.[1]?.body))).toEqual({
+      persona_id: 'persona-api-1',
+      platforms: ['douyin', 'weibo', 'xiaohongshu'],
+      topic_id: 'topic-api-1',
+    })
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      '/api/drafts',
+      expect.objectContaining({ method: 'POST' }),
     )
     expect(await screen.findByText('已同步后端')).toBeInTheDocument()
-    expect(screen.getByDisplayValue(/3 套后端热点：夏日通勤包/)).toBeInTheDocument()
-    expect(screen.getByText('微博正文')).toBeInTheDocument()
+    expect(screen.getByDisplayValue(/后端组合正文/)).toBeInTheDocument()
+    expect(screen.getByText('weibo preview')).toBeInTheDocument()
   })
 
   it('creates a backend schedule for the selected platform', async () => {
@@ -252,7 +260,10 @@ describe('MindFlow AI workbench prototype', () => {
   })
 
   it('shows backend errors instead of silently falling back to mock persistence', async () => {
-    vi.stubGlobal('fetch', createFetchMock({ draftError: 'database unavailable' }))
+    vi.stubGlobal(
+      'fetch',
+      createFetchMock({ compositionError: 'database unavailable' }),
+    )
     const user = userEvent.setup()
 
     render(<App />)
