@@ -15,9 +15,8 @@ import {
   User as UserIcon,
   Wand2,
 } from 'lucide-react'
+import { MindFlowApi, type PlatformId, type ScheduleCreateResponse } from './api'
 import './App.css'
-
-type PlatformId = 'douyin' | 'weibo' | 'xiaohongshu'
 
 type HotTopic = {
   title: string
@@ -112,6 +111,7 @@ const platformPreviews: Record<PlatformId, PlatformPreview> = {
 }
 
 const scheduleTime = '周四 20:30'
+const scheduledFor = '2026-06-04T20:30:00+08:00'
 
 function createDraft(topic: string, persona: Persona) {
   const subject = topic.trim() || '低成本通勤穿搭'
@@ -135,18 +135,36 @@ function createDraft(topic: string, persona: Persona) {
   ].join('\n')
 }
 
+function createDraftTitle(topic: string) {
+  const subject = topic.trim() || '低成本通勤穿搭'
+  return `3 套${subject}，一周重复穿也不尴尬`
+}
+
+function draftTags(topic: string) {
+  const subject = topic.trim() || '通勤穿搭'
+  return [subject, '内容运营', '自动排期']
+}
+
 function App() {
   const [topic, setTopic] = useState('低成本通勤穿搭')
   const [selectedPersonaId, setSelectedPersonaId] = useState(personas[0].id)
   const [draft, setDraft] = useState('')
   const [draftStatus, setDraftStatus] = useState('待生成')
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformId>('weibo')
-  const [isScheduled, setIsScheduled] = useState(false)
+  const [persistedDraftId, setPersistedDraftId] = useState<string | null>(null)
+  const [scheduleResult, setScheduleResult] = useState<ScheduleCreateResponse | null>(null)
+  const [apiError, setApiError] = useState<string | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [isScheduling, setIsScheduling] = useState(false)
 
   const selectedPersona =
     personas.find((persona) => persona.id === selectedPersonaId) ?? personas[0]
 
   const activePreview = platformPreviews[selectedPlatform]
+  const isScheduled = scheduleResult !== null
+  const activeJob = scheduleResult?.publish_jobs.find(
+    (job) => job.platform === selectedPlatform,
+  )
 
   const mediaSlots = useMemo(
     () => [
@@ -161,13 +179,79 @@ function App() {
   function selectHotTopic(nextTopic: string) {
     setTopic(nextTopic)
     setDraftStatus('待生成')
-    setIsScheduled(false)
+    setPersistedDraftId(null)
+    setScheduleResult(null)
+    setApiError(null)
   }
 
-  function generateDraft() {
-    setDraft(createDraft(topic, selectedPersona))
-    setDraftStatus('已生成')
-    setIsScheduled(false)
+  async function generateDraft() {
+    const nextDraft = createDraft(topic, selectedPersona)
+    const nextTitle = createDraftTitle(topic)
+    const nextTags = draftTags(topic)
+
+    setDraft(nextDraft)
+    setDraftStatus('同步中')
+    setScheduleResult(null)
+    setApiError(null)
+    setIsGenerating(true)
+
+    try {
+      const persistedDraft = await MindFlowApi.createDraft({
+        body: nextDraft,
+        generation_source: 'frontend_mock_composer',
+        status: 'generated',
+        tags: nextTags,
+        title: nextTitle,
+      })
+
+      await Promise.all(
+        (Object.keys(platformPreviews) as PlatformId[]).map((platformId) =>
+          MindFlowApi.upsertPlatformPreview(persistedDraft.id, platformId, {
+            body: platformPreviews[platformId].copy,
+            tags: platformPreviews[platformId].hints,
+            title: platformPreviews[platformId].title,
+            validation_details: {
+              hints: platformPreviews[platformId].hints,
+              metric: platformPreviews[platformId].metric,
+            },
+            validation_status: 'valid',
+          }),
+        ),
+      )
+
+      setPersistedDraftId(persistedDraft.id)
+      setDraftStatus('已同步后端')
+    } catch (error) {
+      setPersistedDraftId(null)
+      setDraftStatus('同步失败')
+      setApiError(error instanceof Error ? error.message : '后端同步失败')
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  async function addToSchedule() {
+    if (!persistedDraftId) {
+      setApiError('请先生成图文并同步后端。')
+      return
+    }
+
+    setApiError(null)
+    setIsScheduling(true)
+
+    try {
+      const result = await MindFlowApi.createSchedule(persistedDraftId, {
+        adapter: 'manual',
+        platforms: [selectedPlatform],
+        scheduled_for: scheduledFor,
+        timezone: 'Asia/Shanghai',
+      })
+      setScheduleResult(result)
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : '排期创建失败')
+    } finally {
+      setIsScheduling(false)
+    }
   }
 
   return (
@@ -182,9 +266,9 @@ function App() {
             <Activity aria-hidden="true" size={16} />
             今日 12 条趋势
           </span>
-          <span className="status-pill strong">
+            <span className="status-pill strong">
             <CheckCircle2 aria-hidden="true" size={16} />
-            PostgreSQL 已预留
+            后端 API 已接入
           </span>
         </div>
       </header>
@@ -252,7 +336,7 @@ function App() {
               </div>
               <p className="section-note">当前批次：热点选题 1 条，草稿待审核，排期未确认。</p>
             </div>
-            <span className={draftStatus === '已生成' ? 'status-tag done' : 'status-tag'}>
+            <span className={draftStatus === '已同步后端' ? 'status-tag done' : 'status-tag'}>
               {draftStatus}
             </span>
           </div>
@@ -304,9 +388,14 @@ function App() {
           />
 
           <div className="composer-actions">
-            <button className="primary-action" onClick={generateDraft} type="button">
+            <button
+              className="primary-action"
+              disabled={isGenerating}
+              onClick={generateDraft}
+              type="button"
+            >
               <Sparkles aria-hidden="true" size={18} />
-              生成图文
+              {isGenerating ? '同步中' : '生成图文'}
             </button>
             <button className="secondary-action" type="button">
               <FileText aria-hidden="true" size={18} />
@@ -317,6 +406,11 @@ function App() {
               Legacy 发布能力
             </button>
           </div>
+          {apiError ? (
+            <div className="api-error" role="alert">
+              {apiError}
+            </div>
+          ) : null}
         </section>
 
         <aside className="side-column right-column" aria-label="发布输出">
@@ -349,7 +443,7 @@ function App() {
               <p>{activePreview.copy}</p>
               <div className="preview-visual">
                 <Megaphone aria-hidden="true" size={22} />
-                <span>{draftStatus === '已生成' ? '内容已同步到预览' : '等待生成内容'}</span>
+                <span>{draftStatus === '已同步后端' ? '内容已同步到预览' : '等待生成内容'}</span>
               </div>
               <div className="hint-list">
                 {activePreview.hints.map((hint) => (
@@ -380,20 +474,48 @@ function App() {
             <div className="queue-list">
               <div>
                 <span>抖音</span>
-                <strong>{isScheduled ? '图文草稿已排队' : '待选择时段'}</strong>
+                <strong>
+                  {scheduleResult?.publish_jobs.find((job) => job.platform === 'douyin')
+                    ? '抖音 · scheduled · manual'
+                    : isScheduled
+                      ? '图文草稿已排队'
+                      : '待选择时段'}
+                </strong>
               </div>
               <div>
                 <span>微博</span>
-                <strong>{isScheduled ? '正文待审核' : '待同步草稿'}</strong>
+                <strong>
+                  {scheduleResult?.publish_jobs.find((job) => job.platform === 'weibo')
+                    ? '微博 · scheduled · manual'
+                    : isScheduled
+                      ? '正文待审核'
+                      : '待同步草稿'}
+                </strong>
               </div>
               <div>
                 <span>小红书</span>
-                <strong>{isScheduled ? '封面待确认' : '待补封面'}</strong>
+                <strong>
+                  {scheduleResult?.publish_jobs.find((job) => job.platform === 'xiaohongshu')
+                    ? '小红书 · scheduled · manual'
+                    : isScheduled
+                      ? '封面待确认'
+                      : '待补封面'}
+                </strong>
               </div>
             </div>
-            <button className="schedule-action" onClick={() => setIsScheduled(true)} type="button">
+            {activeJob ? (
+              <p className="job-note">
+                当前平台发布任务：{activeJob.status} · {activeJob.adapter}
+              </p>
+            ) : null}
+            <button
+              className="schedule-action"
+              disabled={isScheduling || !persistedDraftId}
+              onClick={addToSchedule}
+              type="button"
+            >
               <Send aria-hidden="true" size={18} />
-              加入排期
+              {isScheduling ? '创建排期中' : '加入排期'}
             </button>
           </section>
         </aside>
