@@ -4,11 +4,11 @@
 
 - Branch: `main`
 - Harness status: `active`
-- Last verified state: `Sprint 11 frontend API wiring verified with ./scripts/check.sh`
+- Last verified state: `Sprint 12 topic and persona APIs verified with ./scripts/check.sh`
 
 ## Active Contract
 
-- `docs/contracts/sprint-11-frontend-api-wiring.md`
+- `docs/contracts/sprint-12-topic-persona-apis.md`
 
 ## Latest Completed Work
 
@@ -55,10 +55,16 @@
 - Added explicit frontend loading and backend error states instead of silent mock persistence fallback.
 - Added Vite dev proxy configuration for `/api` to `http://127.0.0.1:8000`.
 - Added Sprint 11 frontend tests, design note, and QA report.
+- Added Sprint 12 contract for backend topic and persona APIs.
+- Added create/list API routes for topics ordered by discovered time.
+- Added create/list API routes for active persona templates.
+- Added topic and persona request/response schemas.
+- Added isolated backend API tests proving topic ordering, metadata persistence, and active-only persona listing.
+- Added Sprint 12 design note and QA report.
 
 ## Verification Evidence
 
-- `./scripts/check.sh` passed for Sprint 11. Summary:
+- `./scripts/check.sh` passed for Sprint 12. Summary:
 
 ```text
 [check] repository root: /Users/jie.feng/wlb/MindFlow
@@ -71,18 +77,19 @@ vite v8.0.16 building client environment for production...
 [check] frontend lint
 [check] backend compile
 [check] backend tests
-11 passed
+13 passed
 [check] backend alembic offline migration
 [check] done
 ```
 
 - `git diff --check` passed.
-- `rg -n "sprint-11|MindFlowApi|VITE_API_BASE_URL|/api/drafts|publish_jobs" frontend docs` confirmed the Sprint 11 API wiring terms are present across frontend code and docs.
-- Browser smoke with Vite on `127.0.0.1:5173` confirmed the workbench renders and shows an explicit backend error when `/api/drafts` is unavailable.
+- `rg -n "sprint-12|/api/topics|/api/personas|TopicResponse|PersonaResponse" backend docs` confirmed the Sprint 12 API terms are present across backend code and docs.
+- Targeted backend test `PYTHONPATH=. python3 -m pytest tests/test_content_inputs_api.py -q` passed with `2 passed`.
 
 ## Known Gaps
 
 - The frontend now calls backend APIs for drafts, platform previews, schedules, and publish jobs, but topics, personas, and draft composition are still static/local.
+- Topic and persona backend APIs exist, but the frontend left column has not been wired to them yet.
 - The deployed PostgreSQL server is not connected yet; migrations were verified through Alembic offline SQL generation.
 - AutoRepost is not migrated into MindFlow; it is intentionally documented as an external Weibo publishing adapter.
 - Java checks are not active because the project does not contain Java application code.
@@ -90,6 +97,7 @@ vite v8.0.16 building client environment for production...
 
 ## Recommended Next Steps
 
-1. Configure a safe deployed PostgreSQL environment outside the repository and apply migrations after credentials and backup expectations are confirmed.
-2. Add backend APIs for topics, personas, assets, and AI generation so the remaining static frontend inputs can be persisted.
-3. Add the Weibo AutoRepost adapter only after persisted publish jobs exist in the deployed environment.
+1. Wire the frontend hotspot and persona panels to `/api/topics` and `/api/personas`.
+2. Configure a safe deployed PostgreSQL environment outside the repository and apply migrations after credentials and backup expectations are confirmed.
+3. Add backend APIs for assets and AI generation so draft composition can move out of static frontend logic.
+4. Add the Weibo AutoRepost adapter only after persisted publish jobs exist in the deployed environment.
