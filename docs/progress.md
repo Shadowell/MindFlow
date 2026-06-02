@@ -2,13 +2,13 @@
 
 ## Current Baseline
 
-- Branch: `codex/ai-workbench-ui-prototype`
+- Branch: `main`
 - Harness status: `active`
-- Last verified state: `Sprint 07 AI workbench UI prototype verified with ./scripts/check.sh and browser smoke checks`
+- Last verified state: `Sprint 08 PostgreSQL schema and AutoRepost boundary verified with ./scripts/check.sh`
 
 ## Active Contract
 
-- `docs/contracts/sprint-07-ai-workbench-ui-prototype.md`
+- `docs/contracts/sprint-08-postgresql-schema-and-autorepost-boundary.md`
 
 ## Latest Completed Work
 
@@ -30,10 +30,15 @@
 - Added mock UI workflows for hot topic selection, persona choice, image-text draft generation, Douyin/Weibo/Xiaohongshu previews, and schedule queue status.
 - Updated `scripts/check.sh` so repository checks run frontend test, build, and lint.
 - Added Sprint 07 QA report with automated and browser smoke verification evidence.
+- Added Sprint 08 contract for PostgreSQL schema and AutoRepost integration boundary documentation.
+- Added `docs/architecture/postgresql-schema.md` with the MVP schema for topics, personas, drafts, draft assets, platform accounts, platform previews, schedules, publish jobs, and publish job events.
+- Added `docs/architecture/autorepost-integration.md` documenting AutoRepost as an external Weibo publishing adapter, not the MindFlow source of truth.
+- Added the Sprint 08 design note under `docs/superpowers/specs/`.
+- Added Sprint 08 QA report with documentation and verification evidence.
 
 ## Verification Evidence
 
-- `./scripts/check.sh` passed for Sprint 07. Summary:
+- `./scripts/check.sh` passed for Sprint 08. Summary:
 
 ```text
 [check] repository root: /Users/jie.feng/wlb/MindFlow
@@ -47,21 +52,19 @@ vite v8.0.16 building client environment for production...
 [check] done
 ```
 
-- Browser smoke passed on `http://127.0.0.1:5173/`:
-  - Desktop `1440x920`: no horizontal overflow; three columns were measurable and non-overlapping.
-  - Interaction chain: hot topic selection, mock generation, Xiaohongshu preview, and schedule queue all passed.
-  - Mobile `390x844`: no horizontal overflow.
-  - Screenshots: `/tmp/mindflow-desktop.png`, `/tmp/mindflow-mobile.png`.
+- `git diff --check` passed.
+- `rg -n "publish_jobs|platform_previews|AutoRepost|legacy_task_id|PostgreSQL" ...` confirmed the Sprint 08 schema and integration terms are present across spec, progress, architecture, contract, and QA docs.
 
 ## Known Gaps
 
 - The frontend is still a static prototype; it does not connect to PostgreSQL, OpenAI, or platform APIs.
-- AutoRepost is not migrated yet; the UI only includes a Legacy publishing entry point.
+- PostgreSQL migrations and backend APIs are not implemented yet; Sprint 08 is documentation-only.
+- AutoRepost is not migrated into MindFlow; it is intentionally documented as an external Weibo publishing adapter.
 - Java, Python, and database checks are not yet active because those application areas do not contain code yet.
 - Reusable module choices still need to be rechecked at implementation time because auth/payment packages change quickly.
 
 ## Recommended Next Steps
 
-1. Define the backend API and PostgreSQL schema for topics, personas, drafts, platform previews, schedules, and publish jobs.
-2. Decide how `/Users/jie.feng/wlb/AutoRepost` should integrate behind the publishing queue.
-3. Add real generation and platform adapter contracts after the persistence model is agreed.
+1. Choose the backend stack and implement migrations for the Sprint 08 PostgreSQL schema.
+2. Add draft, platform preview, schedule, and publish job APIs that the frontend can call.
+3. Add the Weibo AutoRepost adapter only after persisted publish jobs exist.
