@@ -31,6 +31,7 @@ When work touches a specific technology area, also read the relevant standard be
 6. Do not add fallback behavior, compatibility layers, mocks, or silent error handling unless the user explicitly requests it.
 7. Match database design complexity to the project's actual scale. Avoid sharding, CQRS, denormalized read models, or other large-system patterns without evidence and explicit approval.
 8. For personal or small projects, prefer mature lightweight integrations for commodity modules. Email registration/login should be the default authentication path unless the user asks for another flow.
+9. After a verified implementation is committed on a feature branch, automatically push the branch, create a GitHub pull request into `main`, merge it, and sync local `main`. If verification fails, GitHub authentication is unavailable, merge conflicts occur, or branch protection blocks the merge, stop and report the blocker instead of bypassing it.
 
 ## Standard Loop
 
