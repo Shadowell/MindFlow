@@ -16,6 +16,48 @@ const draftResponse = {
   updated_at: '2026-06-02T12:00:00Z',
 }
 
+const topicListResponse = {
+  items: [
+    {
+      id: 'topic-api-1',
+      title: '后端热点：夏日通勤包',
+      source_platform: 'xiaohongshu',
+      source_url: null,
+      heat_score: 91,
+      signal: '收藏增长快，评论集中在容量和重量',
+      raw_metadata: { angle: '用 4 个包型覆盖通勤场景' },
+      discovered_at: '2026-06-02T08:00:00Z',
+      created_at: '2026-06-02T08:05:00Z',
+    },
+    {
+      id: 'topic-api-2',
+      title: '后端热点：轻断舍离书桌',
+      source_platform: 'weibo',
+      source_url: null,
+      heat_score: 84,
+      signal: '适合做清单式图文',
+      raw_metadata: { angle: '把杂物按频率分区' },
+      discovered_at: '2026-06-01T08:00:00Z',
+      created_at: '2026-06-01T08:05:00Z',
+    },
+  ],
+}
+
+const personaListResponse = {
+  items: [
+    {
+      id: 'persona-api-1',
+      name: '后端效率派',
+      audience: '职场创作者、通勤用户',
+      tone: '清楚、克制、带一点行动建议',
+      instructions: '保持结构清晰',
+      is_active: true,
+      created_at: '2026-06-02T08:10:00Z',
+      updated_at: '2026-06-02T08:10:00Z',
+    },
+  ],
+}
+
 function previewResponse(platform: 'douyin' | 'weibo' | 'xiaohongshu') {
   return {
     id: `${platform}-preview-id`,
@@ -74,19 +116,60 @@ function mockJsonResponse(body: unknown, init: ResponseInit = {}) {
   })
 }
 
+function createFetchMock(options: { draftError?: string } = {}) {
+  return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const path = String(input)
+    const method = init?.method ?? 'GET'
+
+    if (path === '/api/topics' && method === 'GET') {
+      return mockJsonResponse(topicListResponse)
+    }
+
+    if (path === '/api/personas' && method === 'GET') {
+      return mockJsonResponse(personaListResponse)
+    }
+
+    if (path === '/api/drafts' && method === 'POST') {
+      if (options.draftError) {
+        return mockJsonResponse({ detail: options.draftError }, { status: 503 })
+      }
+
+      return mockJsonResponse(draftResponse, { status: 201 })
+    }
+
+    if (path.includes('/platform-previews/douyin') && method === 'PUT') {
+      return mockJsonResponse(previewResponse('douyin'))
+    }
+
+    if (path.includes('/platform-previews/weibo') && method === 'PUT') {
+      return mockJsonResponse(previewResponse('weibo'))
+    }
+
+    if (path.includes('/platform-previews/xiaohongshu') && method === 'PUT') {
+      return mockJsonResponse(previewResponse('xiaohongshu'))
+    }
+
+    if (path.endsWith('/schedules') && method === 'POST') {
+      return mockJsonResponse(scheduleResponse, { status: 201 })
+    }
+
+    return mockJsonResponse(
+      { detail: `Unhandled test request: ${method} ${path}` },
+      { status: 500 },
+    )
+  })
+}
+
 describe('MindFlow AI workbench prototype', () => {
   beforeEach(() => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => mockJsonResponse({ items: [] })),
-    )
+    vi.stubGlobal('fetch', createFetchMock())
   })
 
   afterEach(() => {
     vi.unstubAllGlobals()
   })
 
-  it('renders the creation workspace as the first screen', () => {
+  it('renders the creation workspace as the first screen', async () => {
     render(<App />)
 
     expect(screen.getByRole('heading', { name: 'AI 图文创作台' })).toBeInTheDocument()
@@ -94,22 +177,38 @@ describe('MindFlow AI workbench prototype', () => {
     expect(screen.getByText('账号人设')).toBeInTheDocument()
     expect(screen.getByText('平台预览')).toBeInTheDocument()
     expect(screen.getByText('排期日历')).toBeInTheDocument()
+    expect(await screen.findByText('后端热点：夏日通勤包')).toBeInTheDocument()
   })
 
-  it('uses a hot topic to seed the composer and persist generated platform copy', async () => {
-    const user = userEvent.setup()
+  it('loads backend topics and personas into the input panels', async () => {
     const fetchMock = vi.mocked(fetch)
-    fetchMock
-      .mockResolvedValueOnce(mockJsonResponse(draftResponse, { status: 201 }))
-      .mockResolvedValueOnce(mockJsonResponse(previewResponse('douyin')))
-      .mockResolvedValueOnce(mockJsonResponse(previewResponse('weibo')))
-      .mockResolvedValueOnce(mockJsonResponse(previewResponse('xiaohongshu')))
+    const user = userEvent.setup()
 
     render(<App />)
 
-    await user.click(screen.getByRole('button', { name: /低成本通勤穿搭/ }))
+    expect(await screen.findByText('后端热点：夏日通勤包')).toBeInTheDocument()
+    expect(screen.getByText('后端效率派')).toBeInTheDocument()
+    expect(screen.queryByText('新手咖啡器具避坑')).not.toBeInTheDocument()
 
-    expect(screen.getByLabelText('创作主题')).toHaveValue('低成本通勤穿搭')
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith('/api/topics', expect.any(Object))
+      expect(fetchMock).toHaveBeenCalledWith('/api/personas', expect.any(Object))
+    })
+
+    await user.click(screen.getByRole('button', { name: /后端热点：轻断舍离书桌/ }))
+
+    expect(screen.getByLabelText('创作主题')).toHaveValue('后端热点：轻断舍离书桌')
+  })
+
+  it('uses a backend hot topic to seed the composer and persist generated platform copy', async () => {
+    const user = userEvent.setup()
+    const fetchMock = vi.mocked(fetch)
+
+    render(<App />)
+
+    await user.click(await screen.findByRole('button', { name: /后端热点：夏日通勤包/ }))
+
+    expect(screen.getByLabelText('创作主题')).toHaveValue('后端热点：夏日通勤包')
 
     await user.click(screen.getByRole('button', { name: '生成图文' }))
 
@@ -124,22 +223,17 @@ describe('MindFlow AI workbench prototype', () => {
       expect.objectContaining({ method: 'PUT' }),
     )
     expect(await screen.findByText('已同步后端')).toBeInTheDocument()
-    expect(screen.getByDisplayValue(/3 套低成本通勤穿搭/)).toBeInTheDocument()
+    expect(screen.getByDisplayValue(/3 套后端热点：夏日通勤包/)).toBeInTheDocument()
     expect(screen.getByText('微博正文')).toBeInTheDocument()
   })
 
   it('creates a backend schedule for the selected platform', async () => {
     const user = userEvent.setup()
     const fetchMock = vi.mocked(fetch)
-    fetchMock
-      .mockResolvedValueOnce(mockJsonResponse(draftResponse, { status: 201 }))
-      .mockResolvedValueOnce(mockJsonResponse(previewResponse('douyin')))
-      .mockResolvedValueOnce(mockJsonResponse(previewResponse('weibo')))
-      .mockResolvedValueOnce(mockJsonResponse(previewResponse('xiaohongshu')))
-      .mockResolvedValueOnce(mockJsonResponse(scheduleResponse, { status: 201 }))
 
     render(<App />)
 
+    await screen.findByText('后端效率派')
     await user.click(screen.getByRole('button', { name: '生成图文' }))
     await screen.findByText('已同步后端')
 
@@ -158,14 +252,12 @@ describe('MindFlow AI workbench prototype', () => {
   })
 
   it('shows backend errors instead of silently falling back to mock persistence', async () => {
+    vi.stubGlobal('fetch', createFetchMock({ draftError: 'database unavailable' }))
     const user = userEvent.setup()
-    const fetchMock = vi.mocked(fetch)
-    fetchMock.mockResolvedValueOnce(
-      mockJsonResponse({ detail: 'database unavailable' }, { status: 503 }),
-    )
 
     render(<App />)
 
+    await screen.findByText('后端效率派')
     await user.click(screen.getByRole('button', { name: '生成图文' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(

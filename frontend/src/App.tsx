@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Activity,
   Calendar,
@@ -15,10 +15,17 @@ import {
   User as UserIcon,
   Wand2,
 } from 'lucide-react'
-import { MindFlowApi, type PlatformId, type ScheduleCreateResponse } from './api'
+import {
+  MindFlowApi,
+  type PersonaResponse,
+  type PlatformId,
+  type ScheduleCreateResponse,
+  type TopicResponse,
+} from './api'
 import './App.css'
 
 type HotTopic = {
+  id: string
   title: string
   source: string
   heat: string
@@ -31,6 +38,7 @@ type Persona = {
   name: string
   tone: string
   audience: string
+  instructions: string | null
 }
 
 type PlatformPreview = {
@@ -40,51 +48,6 @@ type PlatformPreview = {
   copy: string
   hints: string[]
 }
-
-const hotTopics: HotTopic[] = [
-  {
-    title: '低成本通勤穿搭',
-    source: '小红书趋势',
-    heat: '96',
-    angle: '用 3 套搭配解决一周通勤',
-    signal: '收藏率高，评论集中在预算和显瘦',
-  },
-  {
-    title: '周末轻断舍离清单',
-    source: '微博热议',
-    heat: '88',
-    angle: '用一张表安排衣柜和书桌',
-    signal: '适合图文长帖，互动问题明确',
-  },
-  {
-    title: '新手咖啡器具避坑',
-    source: '抖音热点',
-    heat: '82',
-    angle: '把预算拆成入门、进阶、耐用',
-    signal: '短视频可转为 9 图讲解',
-  },
-]
-
-const personas: Persona[] = [
-  {
-    id: 'operator',
-    name: '都市效率派',
-    tone: '克制、清楚、像朋友给建议',
-    audience: '职场新人、通勤用户',
-  },
-  {
-    id: 'curator',
-    name: '生活方式种草',
-    tone: '温和、细节丰富、重体验',
-    audience: '小红书女性用户、轻消费人群',
-  },
-  {
-    id: 'local',
-    name: '本地探店编辑',
-    tone: '直接、信息密、带行动建议',
-    audience: '同城用户、周末出行人群',
-  },
-]
 
 const platformPreviews: Record<PlatformId, PlatformPreview> = {
   douyin: {
@@ -112,6 +75,46 @@ const platformPreviews: Record<PlatformId, PlatformPreview> = {
 
 const scheduleTime = '周四 20:30'
 const scheduledFor = '2026-06-04T20:30:00+08:00'
+
+const sourceLabels: Record<string, string> = {
+  douyin: '抖音热点',
+  weibo: '微博热议',
+  xiaohongshu: '小红书趋势',
+}
+
+function metadataString(
+  metadata: Record<string, unknown> | null,
+  key: string,
+) {
+  const value = metadata?.[key]
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
+function topicFromResponse(topic: TopicResponse): HotTopic {
+  return {
+    id: topic.id,
+    title: topic.title,
+    source: topic.source_platform
+      ? (sourceLabels[topic.source_platform] ?? topic.source_platform)
+      : '后端选题',
+    heat: topic.heat_score === null ? '-' : String(topic.heat_score),
+    angle:
+      metadataString(topic.raw_metadata, 'angle') ??
+      topic.source_url ??
+      '等待运营补充创作角度',
+    signal: topic.signal ?? '等待运营补充信号',
+  }
+}
+
+function personaFromResponse(persona: PersonaResponse): Persona {
+  return {
+    id: persona.id,
+    name: persona.name,
+    audience: persona.audience,
+    tone: persona.tone,
+    instructions: persona.instructions,
+  }
+}
 
 function createDraft(topic: string, persona: Persona) {
   const subject = topic.trim() || '低成本通勤穿搭'
@@ -146,19 +149,23 @@ function draftTags(topic: string) {
 }
 
 function App() {
-  const [topic, setTopic] = useState('低成本通勤穿搭')
-  const [selectedPersonaId, setSelectedPersonaId] = useState(personas[0].id)
+  const [hotTopics, setHotTopics] = useState<HotTopic[]>([])
+  const [personas, setPersonas] = useState<Persona[]>([])
+  const [topic, setTopic] = useState('')
+  const [selectedPersonaId, setSelectedPersonaId] = useState('')
   const [draft, setDraft] = useState('')
   const [draftStatus, setDraftStatus] = useState('待生成')
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformId>('weibo')
   const [persistedDraftId, setPersistedDraftId] = useState<string | null>(null)
   const [scheduleResult, setScheduleResult] = useState<ScheduleCreateResponse | null>(null)
   const [apiError, setApiError] = useState<string | null>(null)
+  const [inputError, setInputError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isLoadingInputs, setIsLoadingInputs] = useState(true)
   const [isScheduling, setIsScheduling] = useState(false)
 
   const selectedPersona =
-    personas.find((persona) => persona.id === selectedPersonaId) ?? personas[0]
+    personas.find((persona) => persona.id === selectedPersonaId) ?? null
 
   const activePreview = platformPreviews[selectedPlatform]
   const isScheduled = scheduleResult !== null
@@ -176,6 +183,57 @@ function App() {
     [],
   )
 
+  useEffect(() => {
+    let isCancelled = false
+
+    async function loadInputs() {
+      setIsLoadingInputs(true)
+      setInputError(null)
+
+      try {
+        const [topicList, personaList] = await Promise.all([
+          MindFlowApi.listTopics(),
+          MindFlowApi.listPersonas(),
+        ])
+
+        if (isCancelled) {
+          return
+        }
+
+        const nextTopics = topicList.items.map(topicFromResponse)
+        const nextPersonas = personaList.items.map(personaFromResponse)
+
+        setHotTopics(nextTopics)
+        setPersonas(nextPersonas)
+        setTopic((current) => current.trim() || nextTopics[0]?.title || '')
+        setSelectedPersonaId((current) =>
+          nextPersonas.some((persona) => persona.id === current)
+            ? current
+            : nextPersonas[0]?.id || '',
+        )
+      } catch (error) {
+        if (isCancelled) {
+          return
+        }
+
+        setHotTopics([])
+        setPersonas([])
+        setSelectedPersonaId('')
+        setInputError(error instanceof Error ? error.message : '素材输入加载失败')
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingInputs(false)
+        }
+      }
+    }
+
+    void loadInputs()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [])
+
   function selectHotTopic(nextTopic: string) {
     setTopic(nextTopic)
     setDraftStatus('待生成')
@@ -185,6 +243,11 @@ function App() {
   }
 
   async function generateDraft() {
+    if (!selectedPersona) {
+      setApiError('请先等待后端返回可用人设。')
+      return
+    }
+
     const nextDraft = createDraft(topic, selectedPersona)
     const nextTitle = createDraftTitle(topic)
     const nextTags = draftTags(topic)
@@ -264,11 +327,11 @@ function App() {
         <div className="topbar-actions" aria-label="工作台状态">
           <span className="status-pill">
             <Activity aria-hidden="true" size={16} />
-            今日 12 条趋势
+            {isLoadingInputs ? '趋势加载中' : `今日 ${hotTopics.length} 条趋势`}
           </span>
-            <span className="status-pill strong">
+          <span className="status-pill strong">
             <CheckCircle2 aria-hidden="true" size={16} />
-            后端 API 已接入
+            主题/人设 API 已接入
           </span>
         </div>
       </header>
@@ -281,23 +344,33 @@ function App() {
               <h2>热点雷达</h2>
             </div>
             <div className="hot-topic-list">
-              {hotTopics.map((hotTopic) => (
-                <button
-                  className="hot-topic"
-                  key={hotTopic.title}
-                  onClick={() => selectHotTopic(hotTopic.title)}
-                  type="button"
-                >
-                  <span className="hot-topic-main">
-                    <span>{hotTopic.title}</span>
-                    <strong>{hotTopic.heat}</strong>
-                  </span>
-                  <span className="hot-topic-meta">
-                    {hotTopic.source} · {hotTopic.angle}
-                  </span>
-                  <span className="hot-topic-signal">{hotTopic.signal}</span>
-                </button>
-              ))}
+              {isLoadingInputs ? (
+                <div className="panel-state">正在加载后端热点...</div>
+              ) : inputError ? (
+                <div className="panel-state error" role="alert">
+                  热点加载失败：{inputError}
+                </div>
+              ) : hotTopics.length === 0 ? (
+                <div className="panel-state">后端暂无热点，等待导入或创建选题。</div>
+              ) : (
+                hotTopics.map((hotTopic) => (
+                  <button
+                    className="hot-topic"
+                    key={hotTopic.id}
+                    onClick={() => selectHotTopic(hotTopic.title)}
+                    type="button"
+                  >
+                    <span className="hot-topic-main">
+                      <span>{hotTopic.title}</span>
+                      <strong>{hotTopic.heat}</strong>
+                    </span>
+                    <span className="hot-topic-meta">
+                      {hotTopic.source} · {hotTopic.angle}
+                    </span>
+                    <span className="hot-topic-signal">{hotTopic.signal}</span>
+                  </button>
+                ))
+              )}
             </div>
           </section>
 
@@ -307,22 +380,36 @@ function App() {
               <h2>账号人设</h2>
             </div>
             <div className="persona-list">
-              {personas.map((persona) => (
-                <button
-                  aria-pressed={persona.id === selectedPersonaId}
-                  className="persona-option"
-                  key={persona.id}
-                  onClick={() => setSelectedPersonaId(persona.id)}
-                  type="button"
-                >
-                  <span>{persona.name}</span>
-                  <small>{persona.audience}</small>
-                </button>
-              ))}
+              {isLoadingInputs ? (
+                <div className="panel-state">正在加载后端人设...</div>
+              ) : inputError ? (
+                <div className="panel-state error">人设加载失败：{inputError}</div>
+              ) : personas.length === 0 ? (
+                <div className="panel-state">后端暂无可用人设，暂不能生成图文。</div>
+              ) : (
+                personas.map((persona) => (
+                  <button
+                    aria-pressed={persona.id === selectedPersonaId}
+                    className="persona-option"
+                    key={persona.id}
+                    onClick={() => setSelectedPersonaId(persona.id)}
+                    type="button"
+                  >
+                    <span>{persona.name}</span>
+                    <small>{persona.audience}</small>
+                  </button>
+                ))
+              )}
             </div>
             <div className="persona-tone">
               <span>输出语气</span>
-              <p>{selectedPersona.tone}</p>
+              <p>
+                {selectedPersona
+                  ? selectedPersona.instructions
+                    ? `${selectedPersona.tone}；${selectedPersona.instructions}`
+                    : selectedPersona.tone
+                  : '等待后端返回可用人设。'}
+              </p>
             </div>
           </section>
         </aside>
@@ -334,7 +421,9 @@ function App() {
                 <Wand2 aria-hidden="true" size={18} />
                 <h2>图文生成编辑区</h2>
               </div>
-              <p className="section-note">当前批次：热点选题 1 条，草稿待审核，排期未确认。</p>
+              <p className="section-note">
+                当前批次：热点选题 {hotTopics.length} 条，草稿待审核，排期未确认。
+              </p>
             </div>
             <span className={draftStatus === '已同步后端' ? 'status-tag done' : 'status-tag'}>
               {draftStatus}
@@ -390,7 +479,7 @@ function App() {
           <div className="composer-actions">
             <button
               className="primary-action"
-              disabled={isGenerating}
+              disabled={isGenerating || !selectedPersona}
               onClick={generateDraft}
               type="button"
             >
