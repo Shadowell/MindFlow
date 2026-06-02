@@ -4,11 +4,11 @@
 
 - Branch: `main`
 - Harness status: `active`
-- Last verified state: `Sprint 13 frontend topic/persona wiring verified with ./scripts/check.sh`
+- Last verified state: `Sprint 14 backend draft composition verified with ./scripts/check.sh`
 
 ## Active Contract
 
-- `docs/contracts/sprint-13-topic-persona-frontend-wiring.md`
+- `docs/contracts/sprint-14-backend-draft-composition.md`
 
 ## Latest Completed Work
 
@@ -68,10 +68,16 @@
 - Removed static frontend topic/persona fallback data from runtime.
 - Added frontend tests proving backend topic/persona loading, selection, and draft generation flow.
 - Added Sprint 13 design note and QA report.
+- Added Sprint 14 contract for a backend draft-composition API.
+- Added `POST /api/compositions/drafts` for deterministic backend template composition from a persisted topic and active persona.
+- Added composition schemas for request and response payloads.
+- Added backend template output that persists one draft and one platform preview per selected platform.
+- Added backend tests proving successful composition and inactive persona rejection.
+- Added Sprint 14 design note and QA report.
 
 ## Verification Evidence
 
-- `./scripts/check.sh` passed for Sprint 13. Summary:
+- `./scripts/check.sh` passed for Sprint 14. Summary:
 
 ```text
 [check] repository root: /Users/jie.feng/wlb/MindFlow
@@ -84,19 +90,19 @@ vite v8.0.16 building client environment for production...
 [check] frontend lint
 [check] backend compile
 [check] backend tests
-13 passed
+15 passed
 [check] backend alembic offline migration
 [check] done
 ```
 
 - `git diff --check` passed.
-- `rg -n "sprint-13|listTopics|listPersonas|/api/topics|/api/personas" frontend docs` confirmed the Sprint 13 frontend API wiring terms are present across frontend code and docs.
-- Targeted frontend test `npm run test` passed with `5 passed`.
-- Browser smoke with Vite on `127.0.0.1:5173` confirmed the workbench renders responsive panels and shows explicit backend topic/persona loading errors when no backend is running.
+- `rg -n "sprint-14|/api/compositions/drafts|DraftComposition|backend_template_composer" backend docs` confirmed the Sprint 14 backend composition terms are present across backend code and docs.
+- Targeted backend test `PYTHONPATH=. python3 -m pytest tests/test_draft_composition_api.py -q` passed with `2 passed`.
 
 ## Known Gaps
 
-- The frontend now calls backend APIs for topics, personas, drafts, platform previews, schedules, and publish jobs, but draft composition is still local.
+- The frontend now calls backend APIs for topics, personas, drafts, platform previews, schedules, and publish jobs, but its generation button has not yet been wired to the backend composition endpoint.
+- The backend composition endpoint is deterministic template output, not AI generation.
 - A fresh backend database can return empty topic/persona lists until records are created through API calls or a future admin/import flow.
 - The deployed PostgreSQL server is not connected yet; migrations were verified through Alembic offline SQL generation.
 - AutoRepost is not migrated into MindFlow; it is intentionally documented as an external Weibo publishing adapter.
@@ -105,7 +111,7 @@ vite v8.0.16 building client environment for production...
 
 ## Recommended Next Steps
 
-1. Add a backend draft-composition endpoint so draft generation can move out of frontend template logic.
+1. Wire the frontend `生成图文` action to `POST /api/compositions/drafts`.
 2. Configure a safe deployed PostgreSQL environment outside the repository and apply migrations after credentials and backup expectations are confirmed.
 3. Add backend APIs for assets and AI generation so draft composition can become provider-backed.
 4. Add the Weibo AutoRepost adapter only after persisted publish jobs exist in the deployed environment.
