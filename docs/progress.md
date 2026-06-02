@@ -4,11 +4,11 @@
 
 - Branch: `main`
 - Harness status: `active`
-- Last verified state: `Sprint 10 backend product APIs verified with ./scripts/check.sh`
+- Last verified state: `Sprint 11 frontend API wiring verified with ./scripts/check.sh`
 
 ## Active Contract
 
-- `docs/contracts/sprint-10-backend-product-apis.md`
+- `docs/contracts/sprint-11-frontend-api-wiring.md`
 
 ## Latest Completed Work
 
@@ -48,16 +48,23 @@
 - Added SQLAlchemy session dependency and Pydantic request/response schemas.
 - Added isolated backend API tests using a local SQLite test database while keeping PostgreSQL Alembic verification.
 - Added Sprint 10 design note and QA report.
+- Added Sprint 11 contract for frontend API wiring.
+- Added `frontend/src/api.ts` with a typed `MindFlowApi` client for Sprint 10 endpoints.
+- Updated the workbench so generating content creates a backend draft and platform previews.
+- Updated the schedule action so it creates backend schedules and publish jobs for the selected platform.
+- Added explicit frontend loading and backend error states instead of silent mock persistence fallback.
+- Added Vite dev proxy configuration for `/api` to `http://127.0.0.1:8000`.
+- Added Sprint 11 frontend tests, design note, and QA report.
 
 ## Verification Evidence
 
-- `./scripts/check.sh` passed for Sprint 10. Summary:
+- `./scripts/check.sh` passed for Sprint 11. Summary:
 
 ```text
 [check] repository root: /Users/jie.feng/wlb/MindFlow
 [check] frontend test
 Test Files  1 passed (1)
-Tests  3 passed (3)
+Tests  4 passed (4)
 [check] frontend build
 vite v8.0.16 building client environment for production...
 ✓ built
@@ -70,12 +77,12 @@ vite v8.0.16 building client environment for production...
 ```
 
 - `git diff --check` passed.
-- `rg -n "sprint-10|/api/drafts|platform_previews|publish_jobs|DATABASE_URL" backend docs scripts` confirmed the Sprint 10 API and persistence terms are present across code, docs, and scripts.
+- `rg -n "sprint-11|MindFlowApi|VITE_API_BASE_URL|/api/drafts|publish_jobs" frontend docs` confirmed the Sprint 11 API wiring terms are present across frontend code and docs.
+- Browser smoke with Vite on `127.0.0.1:5173` confirmed the workbench renders and shows an explicit backend error when `/api/drafts` is unavailable.
 
 ## Known Gaps
 
-- The frontend is still a static prototype; it does not call the backend, PostgreSQL, OpenAI, or platform APIs.
-- The backend has product APIs for drafts, platform previews, schedules, and publish jobs, but the frontend is not wired to them yet.
+- The frontend now calls backend APIs for drafts, platform previews, schedules, and publish jobs, but topics, personas, and draft composition are still static/local.
 - The deployed PostgreSQL server is not connected yet; migrations were verified through Alembic offline SQL generation.
 - AutoRepost is not migrated into MindFlow; it is intentionally documented as an external Weibo publishing adapter.
 - Java checks are not active because the project does not contain Java application code.
@@ -83,6 +90,6 @@ vite v8.0.16 building client environment for production...
 
 ## Recommended Next Steps
 
-1. Wire the frontend prototype away from mock-only state toward the Sprint 10 backend APIs.
-2. Configure a safe deployed PostgreSQL environment outside the repository and apply migrations after credentials and backup expectations are confirmed.
+1. Configure a safe deployed PostgreSQL environment outside the repository and apply migrations after credentials and backup expectations are confirmed.
+2. Add backend APIs for topics, personas, assets, and AI generation so the remaining static frontend inputs can be persisted.
 3. Add the Weibo AutoRepost adapter only after persisted publish jobs exist in the deployed environment.

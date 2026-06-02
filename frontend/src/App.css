@@ -367,6 +367,13 @@ textarea {
   background: #202622;
 }
 
+.primary-action:disabled,
+.secondary-action:disabled,
+.schedule-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .secondary-action,
 .platform-tabs button {
   background: #ffffff;
@@ -540,6 +547,24 @@ textarea {
 
 .schedule-action:hover {
   background: #dceee5;
+}
+
+.api-error {
+  background: #fff3ee;
+  border: 1px solid #f0b29c;
+  border-radius: 8px;
+  color: #9d3418;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  padding: 10px 12px;
+}
+
+.job-note {
+  color: var(--muted-strong);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
 }
 
 @media (max-width: 1180px) {
