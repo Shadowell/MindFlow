@@ -20,6 +20,7 @@ run_if_present() {
   fi
 }
 
+run_if_present "frontend test" "$ROOT_DIR/frontend/package.json" npm test
 run_if_present "frontend build" "$ROOT_DIR/frontend/package.json" npm run build
 run_if_present "frontend lint" "$ROOT_DIR/frontend/package.json" npm run lint
 

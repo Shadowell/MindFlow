@@ -12,7 +12,10 @@ For personal projects, MVPs, and small products, prefer integrating mature light
 - [Supabase Auth overview](https://supabase.com/docs/guides/auth/)
 - [Better Auth: basic usage](https://better-auth.com/docs/basic-usage)
 - [Better Auth: email](https://better-auth.com/docs/concepts/email)
+- [Auth.js documentation](https://authjs.dev/)
 - [django-allauth documentation](https://docs.allauth.org/)
+- [FastAPI Users documentation](https://fastapi-users.github.io/fastapi-users/)
+- [FastAPI Users repository](https://github.com/fastapi-users/fastapi-users)
 - [Stripe samples](https://docs.stripe.com/samples)
 - [Stripe Checkout](https://stripe.com/payments/checkout)
 - [Stripe Billing customer portal](https://docs.stripe.com/billing/subscriptions/customer-portal)
@@ -29,6 +32,13 @@ Preferred order:
 3. Small stack-specific boilerplate used as reference, not blindly copied.
 4. Custom code only for the business-specific layer around the integration.
 
+## Stack Recipes
+
+Read these recipes only when their stack matches the project:
+
+- [Django django-allauth](recipes/django-allauth.md)
+- [Next.js Supabase Auth](recipes/nextjs-supabase-auth.md)
+
 ## Lightweight Project Defaults
 
 Use these defaults for individual developers, personal products, small SaaS projects, internal tools, and early MVPs.
@@ -43,13 +53,19 @@ Default authentication should be email-first:
 - Optional magic link or one-time password if it reduces friction.
 - Optional social login only after email login works.
 
-Recommended starting points:
+Read this decision matrix before choosing an auth module. It is a selection aid, not a stack-specific recipe.
 
-- Supabase stack: Supabase Auth.
-- TypeScript/Next.js stack with owned database: Better Auth.
-- Simple Next.js OAuth/session needs: Auth.js, only if its current docs and adapter support match the project.
-- Django stack: django-allauth.
-- FastAPI stack: FastAPI Users only when maintenance-mode stability is acceptable.
+| Project shape | Default starting point | Use when | Check before implementation |
+| --- | --- | --- | --- |
+| Supabase-backed app | Supabase Auth | The project already uses Supabase database, edge functions, or hosted auth is acceptable. | Email verification settings, redirect URLs, row-level security policies, local development flow, and what user data leaves the app. |
+| TypeScript or Next.js app with an owned database | Better Auth | The app wants email/password, verification, password reset, sessions, and database ownership without adopting a larger IAM product. | Current adapter support, migrations, email provider setup, `baseURL` configuration, and session storage behavior. |
+| Next.js app with simple OAuth or session needs | Auth.js | Provider login and framework-level session integration matter more than owning a full email/password module. | Current App Router support, adapter compatibility, callback behavior, credentials-provider fit, and runtime constraints. |
+| Django app | django-allauth | The project already uses Django and can build on Django's auth conventions. | Email backend, account settings, social provider configuration, custom user model compatibility, and admin workflow. |
+| FastAPI API | FastAPI Users | The project needs ready-made user routes and accepts a stable maintenance-mode library. | Maintenance-mode status, database backend, cookie versus bearer transport, password reset and verification routes, and OpenAPI exposure. |
+| Multiple apps or enterprise identity | Keycloak or external IdP | The product already requires SSO, OIDC/SAML, centralized identity, or directory integration. | Operational ownership, backup and upgrade path, IdP availability, tenant model, and support burden. |
+| Requirement cannot be met by a mature module | Custom business-specific layer only | The unique requirement sits around auth, not inside password hashing, session tokens, or reset-token design. | Written approval, threat model, OWASP guidance, test plan, and why existing modules cannot satisfy the requirement. |
+
+When two lightweight choices fit, pick the one that removes the most moving parts from the current stack. If Supabase is already the backend, Supabase Auth usually wins. If the app owns its database and is TypeScript-first, Better Auth is usually the first candidate. If the stack is Django, prefer django-allauth before introducing a cross-stack auth service.
 
 Avoid by default:
 
