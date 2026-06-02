@@ -2,7 +2,7 @@
 
 ## Product Summary
 
-MindFlow is an AI-assisted content creation workbench for planning, drafting, previewing, and scheduling image-text posts across Douyin, Weibo, and Xiaohongshu. The current implementation is a static frontend prototype with a documented PostgreSQL persistence model and AutoRepost integration boundary before backend code, AI generation, and platform publishing are connected.
+MindFlow is an AI-assisted content creation workbench for planning, drafting, previewing, and scheduling image-text posts across Douyin, Weibo, and Xiaohongshu. The current implementation includes a static frontend prototype plus a Python backend foundation with PostgreSQL migrations for the documented persistence model. AI generation, product CRUD APIs, production database connection, and platform publishing are not connected yet.
 
 The repository still keeps the Codex project-template harness: sprint contracts, progress notes, QA reports, and engineering standards remain the source of truth for incremental delivery.
 
@@ -35,8 +35,8 @@ The repository still keeps the Codex project-template harness: sprint contracts,
 
 - Frontend: Vite + React + TypeScript under `frontend/`.
 - Current frontend state: static prototype with local React state and mock data.
-- Backend: not implemented yet.
-- Storage: PostgreSQL planned for product data, with the MVP schema documented in `docs/architecture/postgresql-schema.md`; markdown files and repository history for delivery state.
+- Backend: Python FastAPI skeleton under `backend/`, with SQLAlchemy metadata and Alembic migrations.
+- Storage: PostgreSQL planned for product data, with the MVP schema documented in `docs/architecture/postgresql-schema.md` and executable migrations under `backend/migrations/`; markdown files and repository history for delivery state.
 - AI generation: not connected yet.
 - Platform integrations: Douyin, Weibo, and Xiaohongshu planned; no live API connection yet.
 - Legacy publishing: `/Users/jie.feng/wlb/AutoRepost` is documented as an external Weibo publishing adapter in `docs/architecture/autorepost-integration.md`; it is not the MindFlow source of truth.
@@ -56,17 +56,17 @@ The repository still keeps the Codex project-template harness: sprint contracts,
 
 - Building a marketing landing page.
 - Implementing real AI generation in the prototype sprint.
-- Connecting PostgreSQL before migrations and API contracts are implemented from the documented schema.
+- Connecting the deployed PostgreSQL server before credentials, backup expectations, and environment handling are confirmed.
 - Connecting Douyin, Weibo, or Xiaohongshu APIs before platform adapter requirements are defined.
 - Migrating AutoRepost code into MindFlow during the MVP backend work.
 - Replacing project-specific engineering judgment with the harness.
 
 ## Acceptance Direction
 
-The immediate acceptance flow remains the frontend prototype flow, with the next backend acceptance direction documented as: create migrations from the PostgreSQL schema, persist drafts and previews, create schedules and publish jobs, then add a narrow AutoRepost adapter for Weibo queueing.
+The immediate acceptance flow remains the frontend prototype flow, with the next backend acceptance direction documented as: persist drafts and previews through HTTP APIs, create schedules and publish jobs, then add a narrow AutoRepost adapter for Weibo queueing.
 
 ## Open Questions
 
-- Which backend stack should own the PostgreSQL migrations and API layer?
 - Which AI provider and prompt contract should be used for real draft generation?
+- How should deployed PostgreSQL credentials and environment-specific secrets be provided outside the repository?
 - What account and credential model is required for Douyin, Weibo, and Xiaohongshu publishing?

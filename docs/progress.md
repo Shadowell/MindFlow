@@ -4,11 +4,11 @@
 
 - Branch: `main`
 - Harness status: `active`
-- Last verified state: `Sprint 08 PostgreSQL schema and AutoRepost boundary verified with ./scripts/check.sh`
+- Last verified state: `Sprint 09 backend skeleton and PostgreSQL migrations verified with ./scripts/check.sh`
 
 ## Active Contract
 
-- `docs/contracts/sprint-08-postgresql-schema-and-autorepost-boundary.md`
+- `docs/contracts/sprint-09-backend-migrations.md`
 
 ## Latest Completed Work
 
@@ -35,10 +35,16 @@
 - Added `docs/architecture/autorepost-integration.md` documenting AutoRepost as an external Weibo publishing adapter, not the MindFlow source of truth.
 - Added the Sprint 08 design note under `docs/superpowers/specs/`.
 - Added Sprint 08 QA report with documentation and verification evidence.
+- Added Sprint 09 contract for a Python FastAPI backend skeleton and PostgreSQL migrations.
+- Added `backend/` with FastAPI health endpoint, settings validation, SQLAlchemy metadata, Alembic configuration, and the initial PostgreSQL schema migration.
+- Added backend tests covering health behavior, `DATABASE_URL` validation, schema table/constraint/index coverage, and Alembic offline SQL rendering.
+- Updated `scripts/check.sh` so repository checks run backend compile, backend tests, and Alembic offline migration generation.
+- Added `.env.example` guidance for `DATABASE_URL` without committing real credentials.
+- Added Sprint 09 design note and QA report.
 
 ## Verification Evidence
 
-- `./scripts/check.sh` passed for Sprint 08. Summary:
+- `./scripts/check.sh` passed for Sprint 09. Summary:
 
 ```text
 [check] repository root: /Users/jie.feng/wlb/MindFlow
@@ -49,22 +55,27 @@ Tests  3 passed (3)
 vite v8.0.16 building client environment for production...
 ✓ built
 [check] frontend lint
+[check] backend compile
+[check] backend tests
+8 passed
+[check] backend alembic offline migration
 [check] done
 ```
 
 - `git diff --check` passed.
-- `rg -n "publish_jobs|platform_previews|AutoRepost|legacy_task_id|PostgreSQL" ...` confirmed the Sprint 08 schema and integration terms are present across spec, progress, architecture, contract, and QA docs.
+- `rg -n "sprint-09|alembic|SQLAlchemy|FastAPI|DATABASE_URL|publish_jobs" backend docs scripts .env.example` confirmed the Sprint 09 backend and migration terms are present across code, docs, scripts, and environment example.
 
 ## Known Gaps
 
-- The frontend is still a static prototype; it does not connect to PostgreSQL, OpenAI, or platform APIs.
-- PostgreSQL migrations and backend APIs are not implemented yet; Sprint 08 is documentation-only.
+- The frontend is still a static prototype; it does not call the backend, PostgreSQL, OpenAI, or platform APIs.
+- The backend has migrations and a health endpoint, but product CRUD APIs are not implemented yet.
+- The deployed PostgreSQL server is not connected yet; migrations were verified through Alembic offline SQL generation.
 - AutoRepost is not migrated into MindFlow; it is intentionally documented as an external Weibo publishing adapter.
-- Java, Python, and database checks are not yet active because those application areas do not contain code yet.
+- Java checks are not active because the project does not contain Java application code.
 - Reusable module choices still need to be rechecked at implementation time because auth/payment packages change quickly.
 
 ## Recommended Next Steps
 
-1. Choose the backend stack and implement migrations for the Sprint 08 PostgreSQL schema.
-2. Add draft, platform preview, schedule, and publish job APIs that the frontend can call.
+1. Add draft, platform preview, schedule, and publish job APIs backed by the Sprint 09 database layer.
+2. Wire the frontend prototype away from mock-only state toward the backend APIs.
 3. Add the Weibo AutoRepost adapter only after persisted publish jobs exist.
