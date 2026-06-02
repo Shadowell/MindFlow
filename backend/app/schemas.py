@@ -28,6 +28,55 @@ class DraftCreate(BaseModel):
     generation_source: str | None = None
 
 
+class TopicCreate(BaseModel):
+    title: str
+    source_platform: str | None = None
+    source_url: str | None = None
+    heat_score: int | None = Field(default=None, ge=0, le=100)
+    signal: str | None = None
+    raw_metadata: dict[str, object] | None = None
+    discovered_at: datetime | None = None
+
+
+class TopicResponse(BaseModel):
+    id: UUID
+    title: str
+    source_platform: str | None
+    source_url: str | None
+    heat_score: int | None
+    signal: str | None
+    raw_metadata: dict[str, object] | None
+    discovered_at: datetime
+    created_at: datetime
+
+
+class TopicListResponse(BaseModel):
+    items: list[TopicResponse]
+
+
+class PersonaCreate(BaseModel):
+    name: str
+    audience: str
+    tone: str
+    instructions: str | None = None
+    is_active: bool = True
+
+
+class PersonaResponse(BaseModel):
+    id: UUID
+    name: str
+    audience: str
+    tone: str
+    instructions: str | None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class PersonaListResponse(BaseModel):
+    items: list[PersonaResponse]
+
+
 class DraftResponse(BaseModel):
     id: UUID
     topic_id: UUID | None

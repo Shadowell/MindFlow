@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 
+from app.api.content_inputs import router as content_inputs_router
 from app.api.drafts import router as drafts_router
 
 app = FastAPI(title="MindFlow Backend")
+app.include_router(content_inputs_router, prefix="/api")
 app.include_router(drafts_router, prefix="/api")
 
 
