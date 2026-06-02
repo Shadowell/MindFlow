@@ -77,6 +77,12 @@ class PersonaListResponse(BaseModel):
     items: list[PersonaResponse]
 
 
+class DraftCompositionCreate(BaseModel):
+    topic_id: UUID
+    persona_id: UUID
+    platforms: list[Platform] = Field(min_length=1)
+
+
 class DraftResponse(BaseModel):
     id: UUID
     topic_id: UUID | None
@@ -115,6 +121,11 @@ class PlatformPreviewResponse(BaseModel):
     validation_details: dict[str, object] | None
     created_at: datetime
     updated_at: datetime
+
+
+class DraftCompositionResponse(BaseModel):
+    draft: DraftResponse
+    platform_previews: list[PlatformPreviewResponse]
 
 
 class ScheduleCreate(BaseModel):
