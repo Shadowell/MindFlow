@@ -2,7 +2,7 @@
 
 ## Product Summary
 
-MindFlow is an AI-assisted content creation workbench for planning, drafting, previewing, and scheduling image-text posts across Douyin, Weibo, and Xiaohongshu. The current implementation includes a static frontend prototype plus a Python backend foundation with PostgreSQL migrations for the documented persistence model. AI generation, product CRUD APIs, production database connection, and platform publishing are not connected yet.
+MindFlow is an AI-assisted content creation workbench for planning, drafting, previewing, and scheduling image-text posts across Douyin, Weibo, and Xiaohongshu. The current implementation includes a static frontend prototype plus a Python backend foundation with PostgreSQL migrations and the first database-backed product APIs for drafts, platform previews, schedules, and publish jobs. AI generation, production database connection, frontend API wiring, and platform publishing are not connected yet.
 
 The repository still keeps the Codex project-template harness: sprint contracts, progress notes, QA reports, and engineering standards remain the source of truth for incremental delivery.
 
@@ -35,7 +35,7 @@ The repository still keeps the Codex project-template harness: sprint contracts,
 
 - Frontend: Vite + React + TypeScript under `frontend/`.
 - Current frontend state: static prototype with local React state and mock data.
-- Backend: Python FastAPI skeleton under `backend/`, with SQLAlchemy metadata and Alembic migrations.
+- Backend: Python FastAPI under `backend/`, with SQLAlchemy metadata, Alembic migrations, health endpoint, and product APIs for drafts, platform previews, schedules, and publish jobs.
 - Storage: PostgreSQL planned for product data, with the MVP schema documented in `docs/architecture/postgresql-schema.md` and executable migrations under `backend/migrations/`; markdown files and repository history for delivery state.
 - AI generation: not connected yet.
 - Platform integrations: Douyin, Weibo, and Xiaohongshu planned; no live API connection yet.
@@ -63,7 +63,7 @@ The repository still keeps the Codex project-template harness: sprint contracts,
 
 ## Acceptance Direction
 
-The immediate acceptance flow remains the frontend prototype flow, with the next backend acceptance direction documented as: persist drafts and previews through HTTP APIs, create schedules and publish jobs, then add a narrow AutoRepost adapter for Weibo queueing.
+The immediate acceptance flow remains the frontend prototype flow, with backend acceptance now covering: create drafts, upsert platform previews, create schedules, generate publish jobs, and read draft details through HTTP APIs. The next acceptance direction is to wire the frontend to these APIs or connect the backend to a deployed PostgreSQL environment after environment handling is confirmed.
 
 ## Open Questions
 

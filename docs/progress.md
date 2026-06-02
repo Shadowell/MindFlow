@@ -4,11 +4,11 @@
 
 - Branch: `main`
 - Harness status: `active`
-- Last verified state: `Sprint 09 backend skeleton and PostgreSQL migrations verified with ./scripts/check.sh`
+- Last verified state: `Sprint 10 backend product APIs verified with ./scripts/check.sh`
 
 ## Active Contract
 
-- `docs/contracts/sprint-09-backend-migrations.md`
+- `docs/contracts/sprint-10-backend-product-apis.md`
 
 ## Latest Completed Work
 
@@ -41,10 +41,17 @@
 - Updated `scripts/check.sh` so repository checks run backend compile, backend tests, and Alembic offline migration generation.
 - Added `.env.example` guidance for `DATABASE_URL` without committing real credentials.
 - Added Sprint 09 design note and QA report.
+- Added Sprint 10 contract for database-backed backend product APIs.
+- Added draft API routes for create, list, and detail reads.
+- Added platform preview upsert API routes.
+- Added schedule creation API that creates publish jobs for selected platforms with existing previews.
+- Added SQLAlchemy session dependency and Pydantic request/response schemas.
+- Added isolated backend API tests using a local SQLite test database while keeping PostgreSQL Alembic verification.
+- Added Sprint 10 design note and QA report.
 
 ## Verification Evidence
 
-- `./scripts/check.sh` passed for Sprint 09. Summary:
+- `./scripts/check.sh` passed for Sprint 10. Summary:
 
 ```text
 [check] repository root: /Users/jie.feng/wlb/MindFlow
@@ -57,18 +64,18 @@ vite v8.0.16 building client environment for production...
 [check] frontend lint
 [check] backend compile
 [check] backend tests
-8 passed
+11 passed
 [check] backend alembic offline migration
 [check] done
 ```
 
 - `git diff --check` passed.
-- `rg -n "sprint-09|alembic|SQLAlchemy|FastAPI|DATABASE_URL|publish_jobs" backend docs scripts .env.example` confirmed the Sprint 09 backend and migration terms are present across code, docs, scripts, and environment example.
+- `rg -n "sprint-10|/api/drafts|platform_previews|publish_jobs|DATABASE_URL" backend docs scripts` confirmed the Sprint 10 API and persistence terms are present across code, docs, and scripts.
 
 ## Known Gaps
 
 - The frontend is still a static prototype; it does not call the backend, PostgreSQL, OpenAI, or platform APIs.
-- The backend has migrations and a health endpoint, but product CRUD APIs are not implemented yet.
+- The backend has product APIs for drafts, platform previews, schedules, and publish jobs, but the frontend is not wired to them yet.
 - The deployed PostgreSQL server is not connected yet; migrations were verified through Alembic offline SQL generation.
 - AutoRepost is not migrated into MindFlow; it is intentionally documented as an external Weibo publishing adapter.
 - Java checks are not active because the project does not contain Java application code.
@@ -76,6 +83,6 @@ vite v8.0.16 building client environment for production...
 
 ## Recommended Next Steps
 
-1. Add draft, platform preview, schedule, and publish job APIs backed by the Sprint 09 database layer.
-2. Wire the frontend prototype away from mock-only state toward the backend APIs.
-3. Add the Weibo AutoRepost adapter only after persisted publish jobs exist.
+1. Wire the frontend prototype away from mock-only state toward the Sprint 10 backend APIs.
+2. Configure a safe deployed PostgreSQL environment outside the repository and apply migrations after credentials and backup expectations are confirmed.
+3. Add the Weibo AutoRepost adapter only after persisted publish jobs exist in the deployed environment.
